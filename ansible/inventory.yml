@@ -1,0 +1,74 @@
+---
+all:
+  children:
+    vps:
+      hosts:
+        sputnik:
+          ansible_host: sputnik.schryborg.de
+
+    proxmox:
+      hosts:
+        pve01:
+          ansible_host: pve01.internal.schryborg.de
+        pve02:
+          ansible_host: pve02.internal.schryborg.de
+        pve03:
+          ansible_host: pve03.internal.schryborg.de
+
+    vms:
+      children:
+        vm_docker:
+          hosts:
+            docker:
+              ansible_host: docker.internal.schryborg.de
+            docker2:
+              ansible_host: docker2.internal.schryborg.de
+            docker3:
+              ansible_host: docker3.internal.schryborg.de
+        vm_k3s:
+          children:
+            k3s_master:
+              hosts:
+                k3s-master1:
+                  ansible_host: 192.168.50.81
+                k3s-master2:
+                  ansible_host: 192.168.50.82
+                k3s-master3:
+                  ansible_host: 192.168.50.83
+            k3s_worker:
+              hosts:
+                k3s-worker1:
+                  ansible_host: 192.168.50.84
+                k3s-worker2:
+                  ansible_host: 192.168.50.85
+                k3s-worker3:
+                  ansible_host: 192.168.50.86
+
+    lxcs:
+      hosts:
+        netbird-gateway:
+          ansible_host: 192.168.50.8
+        pangolin-gateway:
+          ansible_host: 192.168.50.9
+        jellyfin:
+          ansible_host: 192.168.50.48
+        tdarr-node1:
+          ansible_host: 192.168.50.46
+        postgres:
+          ansible_host: 192.168.50.69
+        tdarr-server:
+          ansible_host: 192.168.50.45
+        unifi-network:
+          ansible_host: 192.168.50.7
+        forgejo:
+          ansible_host: 192.168.50.22
+        tdarr-node2:
+          ansible_host: 192.168.50.47
+        caddy:
+          ansible_host: 192.168.50.5
+        technitium1:
+          ansible_host: 192.168.50.30
+        technitium2:
+          ansible_host: 192.168.50.31
+        hermes:
+          ansible_host: 192.168.50.18

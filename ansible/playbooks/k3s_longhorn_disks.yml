@@ -1,0 +1,62 @@
+---
+- name: Format and mount Longhorn disks on k3s workers
+  hosts: k3s_worker
+  become: true
+
+  vars:
+    longhorn_disk_device: /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_drive-scsi1
+    longhorn_mount_path: /mnt/longhorn-disk1
+
+  tasks:
+    - name: Check that the Longhorn disk exists
+      ansible.builtin.stat:
+        path: "{{ longhorn_disk_device }}"
+        follow: true
+      register: longhorn_disk
+
+    - name: Verify that the Longhorn disk is a block device
+      ansible.builtin.assert:
+        that:
+          - longhorn_disk.stat.exists
+          - longhorn_disk.stat.isblk | default(false)
+        fail_msg: >-
+          {{ longhorn_disk_device }} is not available on {{ inventory_hostname }}.
+          Apply the OpenTofu changes and ensure the VM can see its scsi1 disk.
+
+    - name: Install ext4 filesystem tools and iSCSI support
+      ansible.builtin.apt:
+        name:
+          - e2fsprogs
+          - open-iscsi
+        state: present
+        update_cache: true
+
+    - name: Ensure the iSCSI daemon is running and enabled
+      ansible.builtin.service:
+        name: iscsid
+        state: started
+        enabled: true
+
+    - name: Format the Longhorn disk as ext4 if it is unformatted
+      community.general.filesystem:
+        dev: "{{ longhorn_disk_device }}"
+        fstype: ext4
+        force: false
+
+    - name: Create the Longhorn mount point
+      ansible.builtin.file:
+        path: "{{ longhorn_mount_path }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Mount the Longhorn disk and persist it in fstab
+      ansible.posix.mount:
+        src: "{{ longhorn_disk_device }}"
+        path: "{{ longhorn_mount_path }}"
+        fstype: ext4
+        opts: defaults
+        dump: 0
+        passno: 2
+        state: mounted

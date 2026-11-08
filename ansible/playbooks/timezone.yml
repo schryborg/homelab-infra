@@ -1,0 +1,18 @@
+---
+- name: Set timezone to Europe/Berlin
+  hosts: all
+  become: true
+
+  vars:
+    system_timezone: Europe/Berlin
+
+  tasks:
+    - name: Ensure tzdata is installed
+      ansible.builtin.apt:
+        name: tzdata
+        state: present
+        update_cache: true
+
+    - name: Ensure timezone is set to Europe/Berlin
+      ansible.builtin.timezone:
+        name: "{{ system_timezone }}"

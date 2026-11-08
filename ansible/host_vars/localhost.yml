@@ -1,0 +1,4 @@
+---
+# Local path where the k3s kubeconfig from k3s-master1 is written for use by
+# flux/kubectl tasks running on the Ansible control node.
+k3s_kubeconfig_local_path: ~/.kube/config

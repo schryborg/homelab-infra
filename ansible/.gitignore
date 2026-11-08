@@ -1,0 +1,33 @@
+# Ansible runtime artifacts
+*.retry
+*.log
+.cache/
+.ansible/
+
+# Vault passwords / secrets
+.vault_pass*
+.vault-password*
+secrets.yml
+secrets.yaml
+*vault.yml
+*vault.yaml
+
+# Local environment / env files
+.env
+.env.*
+
+# Python virtual environments
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Installed roles / collections if pulled locally
+roles/external/
+collections/ansible_collections/
+
+# Editor / OS artifacts
+*.swp
+*.swo
+*~
+.DS_Store

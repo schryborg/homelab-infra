@@ -1,0 +1,61 @@
+---
+- name: Bootstrap base packages and luke user
+  hosts: "vms:lxcs"
+  become: true
+
+  tasks:
+    - name: Install curl and sudo
+      ansible.builtin.apt:
+        name:
+          - curl
+          - sudo
+        update_cache: true
+
+    - name: Ensure luke user exists
+      ansible.builtin.user:
+        name: luke
+        state: present
+        shell: /bin/bash
+        groups: sudo
+        append: true
+        create_home: true
+
+    - name: Allow luke passwordless sudo
+      ansible.builtin.copy:
+        dest: "/etc/sudoers.d/luke"
+        content: "luke ALL=(ALL) NOPASSWD: ALL\n"
+        owner: root
+        group: root
+        mode: "0440"
+        validate: "visudo -cf %s"
+
+    - name: Ensure luke has an .ssh directory
+      ansible.builtin.file:
+        path: "/home/luke/.ssh"
+        state: directory
+        owner: luke
+        group: luke
+        mode: "0700"
+
+    - name: Read luke SSH public keys
+      ansible.builtin.set_fact:
+        luke_authorized_keys: |
+          {% for key_path in lookup('fileglob', '../../ssh-keys/luke/*.pub', wantlist=True) %}
+          {{ lookup('file', key_path) }}
+          {% endfor %}
+
+    - name: Fail if no SSH public keys were found
+      ansible.builtin.fail:
+        msg: >-
+          No SSH public keys were found at ../../ssh-keys/luke/*.pub
+          (resolved relative to the playbook directory).
+          Refusing to install an empty authorized_keys file.
+      when: luke_authorized_keys | trim | length == 0
+
+    - name: Install luke SSH public keys (exact mirror)
+      ansible.builtin.copy:
+        dest: "/home/luke/.ssh/authorized_keys"
+        content: "{{ luke_authorized_keys }}"
+        owner: luke
+        group: luke
+        mode: "0600"

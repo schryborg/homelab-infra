@@ -1,0 +1,67 @@
+---
+- name: Configure deployers group, docker group membership, and stack directories
+  hosts: vm_docker:vm_k3s
+  become: true
+
+  tasks:
+    - name: Ensure deployers group exists
+      ansible.builtin.group:
+        name: deployers
+        state: present
+
+    - name: Ensure luke is in deployers group
+      ansible.builtin.user:
+        name: luke
+        groups: deployers
+        append: true
+
+    - name: Ensure deploy is in deployers group
+      ansible.builtin.user:
+        name: deploy
+        groups: deployers
+        append: true
+
+    - name: Allow deploy passwordless sudo
+      ansible.builtin.copy:
+        dest: "/etc/sudoers.d/deploy"
+        content: "deploy ALL=(ALL) NOPASSWD: ALL\n"
+        owner: root
+        group: root
+        mode: "0440"
+        validate: "visudo -cf %s"
+
+    - name: Ensure stack directories exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: deploy
+        group: deployers
+        mode: "2775"
+      loop:
+        - /opt/stacks
+        - /opt/stacks-data
+
+    - name: Check docker group exists
+      ansible.builtin.getent:
+        database: group
+        key: docker
+      register: docker_group
+      failed_when: false
+
+    - name: Fail when docker group is missing
+      ansible.builtin.assert:
+        that:
+          - docker_group is not failed
+        fail_msg: "docker group does not exist on {{ inventory_hostname }}"
+
+    - name: Ensure luke is in docker group
+      ansible.builtin.user:
+        name: luke
+        groups: docker
+        append: true
+
+    - name: Ensure deploy is in docker group
+      ansible.builtin.user:
+        name: deploy
+        groups: docker
+        append: true
