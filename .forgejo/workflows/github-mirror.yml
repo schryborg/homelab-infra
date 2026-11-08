@@ -1,0 +1,30 @@
+name: Mirror main to GitHub
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-mirror-${{ github.repository }}-main
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Mirror main
+        uses: https://forgejo.schryborg.de/luke/github-mirror-action@v1
+        with:
+          github-repository: ${{ vars.MIRROR_REPO }}
+          github-token: ${{ secrets.MIRROR_TOKEN }}
+          branch: main
